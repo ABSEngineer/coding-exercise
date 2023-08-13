@@ -4,6 +4,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <string.h>
+#include <fcntl.h>
 #include "heater.h"
 
 /**
@@ -11,7 +12,7 @@
 */
 const char SCHEDULE_ON_STATE = '1';
 const char SCHEDULE_OFF_STATE = '0';
-const int SCHEDULE_SLEEP_TIME = 2;
+const int SCHEDULE_SLEEP_TIME = 1;
 const int SCHEDULE_LENGTH = 2;
 
 /**
@@ -92,20 +93,33 @@ void* output() {
 
     pthread_mutex_lock(&SCHEDULE_THREAD_LOCK);
 
+    /** We can redirect the stdout to a file so it doesn't clutter the console */
+    int output_stream = open("output.txt", O_WRONLY | O_CREAT, 0777);
+    if (output_stream == -1) {
+        fprintf(stderr, "Error: Output stream could not be created\n");
+    }
+
+    /* We dup the stream and push to a file */
+    dup2(output_stream, STDOUT_FILENO);
+    close(output_stream);
 
     /** We use the schedule being null to return from the thread */
     int schedule_index = 0;
     while (current_schedule != NULL) {
 
         if (current_schedule[schedule_index] == SCHEDULE_ON_STATE) {
-            printf("ON\n");
+            fprintf(stdout, "ON\n");
 
         } else if (current_schedule[schedule_index] == SCHEDULE_OFF_STATE) {
-            printf("OFF\n");
+            fprintf(stdout, "OFF\n");
 
         } else {
-            printf("Error\n");
+            fprintf(stderr, "Error: State not valid\n");
+
         }
+
+        /* The push the out to the file via flush */
+        fflush(stdout);
 
         /** We want to zero the index should it reach the end of the schedule (i.e reset it) */
         if (schedule_index >= SCHEDULE_LENGTH - 1) {
@@ -113,7 +127,7 @@ void* output() {
 
         } else {
             schedule_index = schedule_index + 1;
-            
+
         }
         
         // We do a timed wait
@@ -148,7 +162,7 @@ bool update_schedule(const char* new_schedule, const size_t schedule_len) {
 
     /** We want to pass a signal to the heater to wake up. This way it should accept a new schedule (Hopefully.. ) */
     pthread_mutex_unlock(&SCHEDULE_THREAD_LOCK);
-    pthread_cond_signal(&SCHEDULE_WAKEUP_COND);
+    //pthread_cond_signal(&SCHEDULE_WAKEUP_COND);
 
 
     return true;
