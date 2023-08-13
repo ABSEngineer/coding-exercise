@@ -13,7 +13,7 @@
 const char SCHEDULE_ON_STATE = '1';
 const char SCHEDULE_OFF_STATE = '0';
 const int SCHEDULE_SLEEP_TIME = 1800;
-const int SCHEDULE_LENGTH = 48;
+const int SCHEDULE_LENGTH = 3;
 
 /**
  * We'll create on schedule for now, and push it into a struct laterr
@@ -22,6 +22,7 @@ pthread_t SCHEDULE_THREAD_ID;
 pthread_mutex_t SCHEDULE_THREAD_LOCK;
 pthread_cond_t SCHEDULE_WAKEUP_COND;
 char* current_schedule;
+int schedule_index = 0;
 
 
 /**
@@ -104,7 +105,6 @@ void* output() {
     close(output_stream);
 
     /** We use the schedule being null to return from the thread */
-    int schedule_index = 0;
     while (current_schedule != NULL) {
 
         if (current_schedule[schedule_index] == SCHEDULE_ON_STATE) {
@@ -159,6 +159,9 @@ bool update_schedule(const char* new_schedule, const size_t schedule_len) {
     /** We recreate the schedule via a copy */
     current_schedule = (char*)calloc(schedule_len, sizeof(char));
     memcpy(current_schedule, new_schedule, schedule_len);
+
+    /** Reset the schedule */
+    schedule_index = 0;
 
     /** We want to pass a signal to the heater to wake up. This way it should accept a new schedule (Hopefully.. ) */
     pthread_mutex_unlock(&SCHEDULE_THREAD_LOCK);
