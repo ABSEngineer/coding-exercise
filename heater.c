@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
+#include <pthread.h>
+#include <string.h>
 #include "heater.h"
 
 /**
@@ -12,31 +14,145 @@ const char SCHEDULE_OFF_STATE = '0';
 const int SCHEDULE_SLEEP_TIME = 2;
 const int SCHEDULE_LENGTH = 2;
 
+/**
+ * We'll create on schedule for now, and push it into a struct later
+*/
+pthread_t SCHEDULE_THREAD_ID;
+pthread_mutex_t SCHEDULE_THREAD_LOCK;
+pthread_cond_t SCHEDULE_WAKEUP_COND;
+char* current_schedule;
+
 
 /**
  * The purpose of this function is to start the heater
 */
-bool start(const char* schedule, const size_t schedule_len) { return true; }
+bool start(const char* schedule, const size_t schedule_len) { 
+
+
+    /** We create a thread lock to handle the schedule. */
+    const int thread_lock_init_error = pthread_mutex_init(&SCHEDULE_THREAD_LOCK, NULL);
+    if (thread_lock_init_error) {
+        return false;
+    }
+
+    /** We need a condition to wake up the heater */
+    const int thread_cond_error = pthread_cond_init(&SCHEDULE_WAKEUP_COND, NULL);
+    if (thread_cond_error) {
+        return false;
+    }
+
+    /** We'll copy the schedule for a better mem safety */
+    current_schedule = (char*)calloc(schedule_len, sizeof(char));
+    if (current_schedule == NULL) {
+        return false;
+
+    } else {
+        memcpy(current_schedule, schedule, schedule_len);
+
+    }
+    
+    /** Then we'll spawn the heater */
+    const int thread_creation_error = pthread_create(&SCHEDULE_THREAD_ID, NULL, &output, NULL);
+    if (thread_creation_error) {
+        return false;
+    }
+    
+
+    return true; 
+    
+}
 
 /**
  * The purpose of this function is to stop the heater
 */
-bool stop() { return true; }
+bool stop() {    
+
+    pthread_mutex_lock(&SCHEDULE_THREAD_LOCK);
+    free(current_schedule);
+    current_schedule = NULL;
+    pthread_mutex_unlock(&SCHEDULE_THREAD_LOCK);
+    return true;
+    
+}
 
 /**
  * The purpose of this function is to return if the heater has started
 */
-bool has_started() { return true; }
+bool has_started() { 
+
+    /* We can use the null of the schedule to decide if the heater has stopped.... */
+    return !(current_schedule == NULL); 
+}
 
 /**
  * This purpose of this method is to output the state of the heater
 */
-void* output() { return NULL; }
+void* output() {     
+    
+
+    pthread_mutex_lock(&SCHEDULE_THREAD_LOCK);
+
+
+    /** We use the schedule being null to return from the thread */
+    int schedule_index = 0;
+    while (current_schedule != NULL) {
+
+        if (current_schedule[schedule_index] == SCHEDULE_ON_STATE) {
+            printf("ON\n");
+
+        } else if (current_schedule[schedule_index] == SCHEDULE_OFF_STATE) {
+            printf("OFF\n");
+
+        } else {
+            printf("Error\n");
+        }
+
+        /** We want to zero the index should it reach the end of the schedule (i.e reset it) */
+        if (schedule_index >= SCHEDULE_LENGTH) {
+            schedule_index = 0;
+        } else {
+            schedule_index = schedule_index + 1;
+        }
+        
+        // We do a timed wait
+        struct timespec ts;
+        ts.tv_sec = time(NULL) + SCHEDULE_SLEEP_TIME;
+        pthread_cond_timedwait(&SCHEDULE_WAKEUP_COND, &SCHEDULE_THREAD_LOCK, &ts);
+
+
+    }
+
+
+    pthread_mutex_unlock(&SCHEDULE_THREAD_LOCK); 
+    
+}
+
 
 /**
  * The purpose of this function is to update the heaters schedule
 */
-bool update_schedule(const char* schedule, const size_t schedule_len) { return true; }
+bool update_schedule(const char* new_schedule, const size_t schedule_len) { 
+    
+
+    pthread_mutex_lock(&SCHEDULE_THREAD_LOCK);
+
+    /** We free the current schedule */
+    free(current_schedule);
+    current_schedule = NULL;
+
+    /** We recreate the schedule via a copy */
+    current_schedule = (char*)calloc(schedule_len, sizeof(char));
+    memcpy(current_schedule, new_schedule, schedule_len);
+
+    pthread_mutex_unlock(&SCHEDULE_THREAD_LOCK);
+
+    /** We want to pass a signal to the heater to wake up. This way it should accept a new schedule (Hopefully.. ) */
+    pthread_cond_signal(&SCHEDULE_WAKEUP_COND);
+
+
+    return true;
+    
+}
 
 /**
  * The purpose of this method is to validate the updated schedule
