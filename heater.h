@@ -5,6 +5,12 @@
 #include <stdbool.h>
 
 /**
+ * The size of the schedule (Note. This will need to plus 1 for input)
+*/
+extern const int SCHEDULE_LENGTH;
+
+
+/**
  * The purpose of this function is to start the heater
 */
 bool start(const char*, const size_t);
@@ -42,7 +48,7 @@ bool validate_schedule_size(const size_t, const size_t);
 /**
  * The purpose of this method is to validate the states of the schedule
 */
-bool validate_schedule_states(const char*, size_t);
+bool validate_schedule_states(const char*, const size_t);
 
 
 #endif
