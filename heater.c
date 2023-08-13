@@ -16,7 +16,7 @@ const int SCHEDULE_SLEEP_TIME = 1800;
 const int SCHEDULE_LENGTH = 48;
 
 /**
- * We'll create on schedule for now, and push it into a struct later
+ * We'll create on schedule for now, and push it into a struct laterr
 */
 pthread_t SCHEDULE_THREAD_ID;
 pthread_mutex_t SCHEDULE_THREAD_LOCK;
