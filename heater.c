@@ -108,7 +108,7 @@ void* output() {
         }
 
         /** We want to zero the index should it reach the end of the schedule (i.e reset it) */
-        if (schedule_index >= SCHEDULE_LENGTH) {
+        if (schedule_index >= SCHEDULE_LENGTH - 1) {
             schedule_index = 0;
         } else {
             schedule_index = schedule_index + 1;
