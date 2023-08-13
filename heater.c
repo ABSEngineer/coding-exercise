@@ -162,7 +162,7 @@ bool update_schedule(const char* new_schedule, const size_t schedule_len) {
 
     /** We want to pass a signal to the heater to wake up. This way it should accept a new schedule (Hopefully.. ) */
     pthread_mutex_unlock(&SCHEDULE_THREAD_LOCK);
-    //pthread_cond_signal(&SCHEDULE_WAKEUP_COND);
+    pthread_cond_signal(&SCHEDULE_WAKEUP_COND);
 
 
     return true;
