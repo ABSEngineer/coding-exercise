@@ -12,8 +12,8 @@
 */
 const char SCHEDULE_ON_STATE = '1';
 const char SCHEDULE_OFF_STATE = '0';
-const int SCHEDULE_SLEEP_TIME = 1;
-const int SCHEDULE_LENGTH = 2;
+const int SCHEDULE_SLEEP_TIME = 1800;
+const int SCHEDULE_LENGTH = 48;
 
 /**
  * We'll create on schedule for now, and push it into a struct later
