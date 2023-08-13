@@ -18,7 +18,7 @@ int main() {
         char* new_schedule = (char*)calloc(input_size, sizeof(char));
 
         /** Next we read the user input */
-        fprintf(stdout, "Entered schedule was not valid\n");
+        fprintf(stdout, "Entered schedule: \n");
         size_t character_count = getline(&new_schedule, &input_size, stdin);
 
         /** Then we validate the input */

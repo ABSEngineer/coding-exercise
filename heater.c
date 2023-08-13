@@ -110,8 +110,10 @@ void* output() {
         /** We want to zero the index should it reach the end of the schedule (i.e reset it) */
         if (schedule_index >= SCHEDULE_LENGTH - 1) {
             schedule_index = 0;
+
         } else {
             schedule_index = schedule_index + 1;
+            
         }
         
         // We do a timed wait
@@ -144,9 +146,8 @@ bool update_schedule(const char* new_schedule, const size_t schedule_len) {
     current_schedule = (char*)calloc(schedule_len, sizeof(char));
     memcpy(current_schedule, new_schedule, schedule_len);
 
-    pthread_mutex_unlock(&SCHEDULE_THREAD_LOCK);
-
     /** We want to pass a signal to the heater to wake up. This way it should accept a new schedule (Hopefully.. ) */
+    pthread_mutex_unlock(&SCHEDULE_THREAD_LOCK);
     pthread_cond_signal(&SCHEDULE_WAKEUP_COND);
 
 
