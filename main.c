@@ -3,12 +3,13 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
 #include "heater.h"
 
 
 int main() {
 
-
+    int console_desc = dup(1);  
     while (true) {
 
          /** We increase the schedule size to include an end of line character */
@@ -18,7 +19,7 @@ int main() {
         char* new_schedule = (char*)calloc(input_size, sizeof(char));
 
         /** Next we read the user input */
-        fprintf(stdout, "Entered schedule: ");
+        write(console_desc, "Enter schedule: ", 17);
         size_t character_count = getline(&new_schedule, &input_size, stdin);
 
         /** Then we validate the input */
@@ -32,6 +33,8 @@ int main() {
                 update_schedule(new_schedule, character_count);
 
             }
+
+            write(console_desc, "Schedule accepted\n", 19);
 
         } else {
             
